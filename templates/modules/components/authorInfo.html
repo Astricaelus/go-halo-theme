@@ -10,6 +10,10 @@
     th:style="${theme.config.authorInfo.fontColor != null && theme.config.authorInfo.fontColor != '' && theme.config.authorInfo.backgroundType != 'disable'} ?
               'color: ' + ${theme.config.authorInfo.fontColor} + ' !important;' :
               null"
+    th:with="
+      hitokotoSentences=${#ctx.containsVariable('hitokotoFinder') and #ctx.getVariable('hitokotoFinder') != null ? hitokotoFinder.randomSentences(1,null) : null},
+      hitokotoContent=${!#lists.isEmpty(hitokotoSentences) and hitokotoSentences[0] != null and !#strings.isEmpty(hitokotoSentences[0].content) ? hitokotoSentences[0].content : theme.config.authorInfo.description}
+    "
   >
     <!-- 背景图 + 亮度 + 模糊 -->
     <div
@@ -89,8 +93,7 @@
     <div
       x-data="typewriter()"
       x-init="init()"
-      data-hitokoto-author-description
-      th:attr="data-text=${theme.config.authorInfo.description}"
+      th:attr="data-text=${hitokotoContent}"
       th:if="${theme.config.authorInfo.backgroundHeightType == 'screen'}"
       class="relative w-full max-w-md whitespace-pre-line text-center text-lg font-medium max-md:text-base"
       style="line-height: 1.5; opacity: 0.9"
@@ -126,61 +129,6 @@
 
     <script>
       const initializedElements = new WeakSet();
-      const hitokotoHubEndpoint =
-        "/apis/public.api.hitokotohub.puresky.top/v1alpha1/sentence/random?limit=1&encode=json";
-      let hitokotoHubTextPromise;
-
-      function getHitokotoHubText() {
-        if (hitokotoHubTextPromise) {
-          return hitokotoHubTextPromise;
-        }
-
-        hitokotoHubTextPromise = new Promise(async (resolve) => {
-          if (typeof fetch !== "function") {
-            resolve("");
-            return;
-          }
-
-          const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
-          const timeoutId = controller ? window.setTimeout(() => controller.abort(), 1500) : null;
-
-          try {
-            const response = await fetch(hitokotoHubEndpoint, {
-              credentials: "same-origin",
-              headers: {
-                Accept: "application/json",
-              },
-              signal: controller ? controller.signal : undefined,
-            });
-
-            if (!response.ok) {
-              resolve("");
-              return;
-            }
-
-            const data = await response.json();
-            const sentence = Array.isArray(data.sentences)
-              ? data.sentences.find((item) => item && typeof item.content === "string" && item.content.trim())
-              : null;
-
-            resolve(sentence ? sentence.content.trim() : "");
-          } catch (error) {
-            resolve("");
-          } finally {
-            if (timeoutId) {
-              window.clearTimeout(timeoutId);
-            }
-          }
-        });
-
-        return hitokotoHubTextPromise;
-      }
-
-      async function resolveAuthorDescription(element) {
-        const fallbackText = element.dataset.text || element.textContent || "";
-        const hitokotoText = await getHitokotoHubText();
-        return hitokotoText || fallbackText;
-      }
 
       function typewriter() {
         return {
@@ -204,7 +152,7 @@
             initializedElements.add(this.$el);
 
             this.$nextTick(async () => {
-              const rawText = await resolveAuthorDescription(this.$el);
+              const rawText = this.$el.dataset.text || this.$el.textContent || "";
               this.$el.dataset.text = rawText;
               this.fullLines = rawText
                 .split("\n")
@@ -253,23 +201,12 @@
           },
         };
       }
-
-      document.addEventListener("DOMContentLoaded", () => {
-        document.querySelectorAll("[data-hitokoto-author-description]:not([x-data])").forEach(async (element) => {
-          const description = await resolveAuthorDescription(element);
-          if (description.trim()) {
-            element.textContent = description;
-          }
-        });
-      });
     </script>
 
     <!-- 简介标准版 -->
     <p
-      data-hitokoto-author-description
       th:if="${theme.config.authorInfo.backgroundHeightType != 'screen'}"
-      th:utext="${theme.config.authorInfo.description}"
-      th:attr="data-text=${theme.config.authorInfo.description}"
+      th:text="${hitokotoContent}"
       class="max-w-md whitespace-pre-line text-center text-sm font-medium"
       th:style="|opacity:| + ${theme.config.authorInfo.descriptionOpacity} / 100.0 + |; line-height: 1.5;|"
     ></p>
