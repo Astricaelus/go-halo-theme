@@ -262,7 +262,7 @@ spec:
         - $formkit: textarea
           name: description
           rows: 3
-          label: 描述（换行将开启打字机的切换效果）
+          label: 描述（全屏时将开启打字机的切换效果）
           placeholder: 如：我是 XX，一个拥有多年经验的创意设计师和开发人员，在这里可以了解
           value: "欢迎访问我的个人博客，我将在这里与你分享更多精彩内容"
         - $formkit: number
