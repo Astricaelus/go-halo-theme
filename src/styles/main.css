@@ -16,7 +16,6 @@ html {
 }
 
 html.dark {
-  color-scheme: dark;
   --bg-page: #0f1115;
   --bg-surface: #1a1d23;
   --bg-surface-2: #262a32;
@@ -106,11 +105,11 @@ hyperlink-card {
   margin-bottom: 1rem !important;
 }
 
-* {
+[data-overlayscrollbars-viewport] {
   scrollbar-width: none;
 }
 
-::-webkit-scrollbar {
+[data-overlayscrollbars-viewport]::-webkit-scrollbar {
   display: none;
 }
 
